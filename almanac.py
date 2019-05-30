@@ -9,10 +9,6 @@ import os
 client = discord.Client()
 session_dict = {}
 
-#Credit: https://www.geeksforgeeks.org/generating-random-ids-python/
-def ran_gen(size, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for x in range(size))
-
 class Session:
     def __init__(self, channel_id, title, start_time, server_id):
         self.server_id = server_id
@@ -23,7 +19,7 @@ class Session:
         #Create directory if it doesn't exist
         if not os.path.exists('sessions/' + server_id):
             os.mkdir('sessions/' + server_id)
-        self.file = open('sessions/' + server_id + '/' + ran_gen(8,channel_id) + '.txt', 'w+')
+        self.file = open('sessions/' + server_id + '/' + title + '.txt', 'w+')
 
         #Write title and date
         self.file.write(self.title + '\n')
@@ -42,11 +38,11 @@ async def on_message(message):
         return
 
     author = message.author
-    content = message.clean_content
+    content = message.clean_content + ' no_title'
     channel = message.channel
     channel_id = str(channel.id)
     server_id = str(channel.guild.id)
-    title = content.replace('r.start','').replace('r.stop','').replace('r.is_recording','').replace('r.list','').lstrip()
+    title = content.split(' ')[1]
     time = str(message.created_at)
 
     #Default false
@@ -61,13 +57,12 @@ async def on_message(message):
         if(is_recording):
             await channel.send("This channel is already being recorded. Use r.stop to end the recording.")
         else:
-            print(title)
-            if(title != ''):
+            if(title != 'no_title'):
                 await channel.send("This channel is now being recorded.")
                 session = Session(channel_id,title,time,server_id)
                 session_dict[channel_id] = session
             else:
-                await channel.send("Please include a name, such as: r.start An awesome recording!")
+                await channel.send("**Error:** Please include a file name. `r.start <filename>`")
 
 
     #Stop recording
@@ -78,16 +73,20 @@ async def on_message(message):
             session.file.close()
             session_dict.pop(channel_id)
         else:
-            await channel.send("The channel is not recording. Use r.start <name> to start.")
+            await channel.send("The channel is not recording. Use `r.start <name> to start.`")
 
     #List recordings
     elif content.startswith('r.list'):
         m = ""
-        for file_name in os.listdir('sessions/' + server_id):
-            with open('sessions/' + server_id + '/' + file_name, 'r') as f:
-                first_line = f.readline()
-                m = m + first_line
-        await channel.send(m)
+        file_path = 'sessions/' + server_id
+        if(os.path.exists(file_path)):
+            for file_name in os.listdir(file_path):
+                with open('sessions/' + server_id + '/' + file_name, 'r') as f:
+                    first_line = f.readline()
+                    m = m + first_line
+            await channel.send(m)
+        else:
+            await channel.send("Make some recordings first!")
 
     #Is recording
     elif content.startswith('r.is_recording'):
@@ -96,11 +95,30 @@ async def on_message(message):
         else:
             await channel.send("The channel is not recording.")
 
+    #Download
+    elif content.startswith('r.download'):
+        try:
+            title = message.content.split(' ')[1]
+            file_path = 'sessions/' + server_id + '/' + title + '.txt';
+            if(os.path.exists(file_path)):
+                await channel.send(file=discord.File(file_path))
+            else:
+                await channel.send("**Error:** No such recording. Use `r.list to view.`")
+        except:
+            await channel.send("**Error:** Use like: `r.download <name>`")
+
+    #Help
+    elif content.startswith('r.help'):
+        await channel.send("`r.start <title>` to begin recording\n`r.stop` to stop recording\n`r.download <title>` to download recording\n`r.list` to see all recordings\n`r.is_recording` to test for recordings.")
+
+
+
+
     #Possibly log messages
     else:
         if(is_recording):
             session = session_dict.get(channel_id)
-            session.file.write(author.display_name + ": " + content + '\n')
+            session.file.write('**' + author.display_name + ":** " + content + '\n')
 
 
 
