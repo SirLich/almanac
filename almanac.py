@@ -38,7 +38,7 @@ async def on_message(message):
         return
 
     author = message.author
-    content = message.clean_content + ' no_title'
+    content = message.clean_content + ' '
     channel = message.channel
     channel_id = str(channel.id)
     server_id = str(channel.guild.id)
@@ -57,9 +57,9 @@ async def on_message(message):
         if(is_recording):
             await channel.send("This channel is already being recorded. Use r.stop to end the recording.")
         else:
-            if(title != 'no_title'):
+            if(title != ''):
                 await channel.send("This channel is now being recorded.")
-                session = Session(channel_id,title,time,server_id)
+                session = Session(channel_id,title.strip(),time,server_id)
                 session_dict[channel_id] = session
             else:
                 await channel.send("**Error:** Please include a file name. `r.start <filename>`")
