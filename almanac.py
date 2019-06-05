@@ -122,7 +122,7 @@ async def on_message(message):
     else:
         if(is_recording):
             session = session_dict.get(channel_id)
-            session.file.write('**' + author.display_name + ":** " + content + '\n')
+            session.file.write('**' + author.display_name + ":** " + content + '\n\n')
 
 
 
