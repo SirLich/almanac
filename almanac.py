@@ -92,6 +92,18 @@ async def on_message(message):
         else:
             await channel.send("Make some recordings first!")
 
+    #Chapter
+    if content.startswith('r.chapter'):
+        if(!is_recording):
+            await channel.send("**Error:** This channel is not recording. Please use `r.help`")
+        else:
+            if(title != ''):
+                message.add_reaction(":thumbsup:")
+                session = session_dict.get(channel_id)
+                session.file.write('\n\n=-=-=-=-= **' + title + '** =-=-=-=-=\n')
+            else:
+                await channel.send("**Error:** Please include a chapter name. `r.chapter <chapter>`")
+
     #Is recording
     elif content.startswith('r.is_recording'):
         if(is_recording):
@@ -113,7 +125,7 @@ async def on_message(message):
 
     #Help
     elif content.startswith('r.help'):
-        await channel.send("`r.start <title>` to begin recording\n`r.stop` to stop recording\n`r.download <title>` to download recording\n`r.list` to see all recordings\n`r.is_recording` to test for recordings.")
+        await channel.send("`r.start <title>` to begin recording\n`r.stop` to stop recording\n`r.download <title>` to download recording\n`r.list` to see all recordings\n`r.is_recording` to test for recordings.\n`r.chapter <chapter> to make a new chapter")
 
 
 
