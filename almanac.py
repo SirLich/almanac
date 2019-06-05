@@ -37,6 +37,10 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    #Ignore .messages
+    if message.content.startswirth('.'):
+        return
+
     author = message.author
     content = message.clean_content + ' '
     channel = message.channel
