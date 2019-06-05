@@ -38,7 +38,7 @@ async def on_message(message):
         return
 
     #Ignore .messages
-    if message.content.startswirth('.'):
+    if message.content.startswith('.'):
         return
 
     author = message.author
@@ -94,13 +94,14 @@ async def on_message(message):
 
     #Chapter
     if content.startswith('r.chapter'):
-        if(!is_recording):
+        if(not is_recording):
             await channel.send("**Error:** This channel is not recording. Please use `r.help`")
         else:
             if(title != ''):
-                message.add_reaction(":thumbsup:")
+                #Add thumbs up emoji
+                await message.add_reaction("\U0001f44d")
                 session = session_dict.get(channel_id)
-                session.file.write('\n\n=-=-=-=-= **' + title + '** =-=-=-=-=\n')
+                session.file.write('\n\n=-=-=-=-= **' + content.replace("r.chapter ","") + '** =-=-=-=-=\n')
             else:
                 await channel.send("**Error:** Please include a chapter name. `r.chapter <chapter>`")
 
@@ -125,7 +126,7 @@ async def on_message(message):
 
     #Help
     elif content.startswith('r.help'):
-        await channel.send("`r.start <title>` to begin recording\n`r.stop` to stop recording\n`r.download <title>` to download recording\n`r.list` to see all recordings\n`r.is_recording` to test for recordings.\n`r.chapter <chapter> to make a new chapter")
+        await channel.send("`r.start <title>` to begin recording\n`r.stop` to stop recording\n`r.download <title>` to download recording\n`r.list` to see all recordings\n`r.is_recording` to test for recordings.\n`r.chapter <chapter>` to make a new chapter")
 
 
 
