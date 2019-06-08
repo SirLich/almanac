@@ -9,6 +9,33 @@ import os
 client = discord.Client()
 session_dict = {}
 
+def send_message(m):
+    await channel.send(m)
+
+
+class Command:
+    def __init__(self, raw, issue = ""):
+        split = raw.split()
+
+        #Create command label
+        try:
+            self.label = split[0]
+        except:
+            self.label = ""
+            if(issue != ""):
+                send_message(issue)
+                return false
+        #Create command arg
+        try:
+            self.arg = split[1]
+        except:
+            if(issue != ""):
+                send_message(issue)
+                return false
+        return true
+
+
+
 class Session:
     def __init__(self, channel_id, title, start_time, server_id):
         self.server_id = server_id
