@@ -217,6 +217,12 @@ async def delete_error(ctx, error):
     else:
         await ctx.send("An error occured in this command.")
 
+#CODE
+@bot.command(aliases=['github','website'])
+async def code(ctx):
+    await ctx.channel.send("https://github.com/SirLich/almanac")
+
+
 
 @bot.event
 async def on_ready():
