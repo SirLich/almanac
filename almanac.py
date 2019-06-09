@@ -179,11 +179,8 @@ async def download_all(ctx):
     path_to_dir = 'sessions/' + server_id
     shutil.make_archive(server_name, 'zip', path_to_dir)
 
-    await ctx.send("Here")
-
-
-
-
+    await ctx.send(file=discord.File(server_name + '.zip'))
+    os.remove(server_name + '.zip')
 
 @bot.event
 async def on_ready():
