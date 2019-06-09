@@ -95,10 +95,12 @@ async def list(ctx):
     m = ""
     file_path = 'sessions/' + server_id
     if(os.path.exists(file_path)):
+        num = 1
         for file_name in os.listdir(file_path):
             with open('sessions/' + server_id + '/' + file_name, 'r') as f:
                 first_line = f.readline()
-                m = m + first_line
+                m = m + str(num) + ': ' + first_line
+            num += 1
         await channel.send(m)
     else:
         await channel.send("Make some recordings first!")
@@ -181,6 +183,36 @@ async def download_all(ctx):
 
     await ctx.send(file=discord.File(server_name + '.zip'))
     os.remove(server_name + '.zip')
+
+#Download ALL error
+@download_all.error
+async def download_all_error(ctx, error):
+    print(error)
+    await ctx.send("An error occured in this command.")
+
+#DELETE
+@bot.command()
+async def delete(ctx, *, recording_title):
+    channel = ctx.channel
+    server_id = str(channel.guild.id)
+
+    file_path = 'sessions/' + server_id + '/' + recording_title + '.txt'
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        await channel.send("Recording deleted")
+    else:
+        print(file_path)
+        await channel.send("That recording doesn't exist!")
+
+#DELETE ERROR
+@delete.error
+async def delete_error(ctx, error):
+    print(error)
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please provide a recording to delete")
+    else:
+        await ctx.send("An error occured in this command.")
+
 
 @bot.event
 async def on_ready():
