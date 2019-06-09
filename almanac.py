@@ -66,7 +66,7 @@ async def start_error(ctx, error):
 
 #STOP
 @bot.command()
-@commands.check(is_recording)
+@commands.check(is_not_recording)
 async def stop(ctx):
     channel = ctx.channel
     channel_id = str(channel.id)
@@ -84,6 +84,8 @@ async def stop_error(ctx, error):
     print(error)
     if isinstance(error, commands.CheckFailure):
         await ctx.send("The channel is not recording")
+    else:
+        await ctx.send("That command ran into a problem")
 
 
 #LIST
@@ -130,6 +132,8 @@ async def start_error(ctx, error):
         await ctx.send("Please provide a chapter title")
     if isinstance(error, commands.CheckFailure):
         await ctx.send("The channel is not recording")
+    else:
+        await ctx.send("That code ran into a problem")
 
 #IS RECORDING
 @bot.command()
