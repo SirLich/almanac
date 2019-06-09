@@ -6,8 +6,8 @@ import uuid
 import random
 import string
 import os
+import shutil
 
-client = discord.Client()
 session_dict = {}
 DEBUG_MODE = True
 bot = commands.Bot(command_prefix='r.')
@@ -33,37 +33,43 @@ class Session:
         self.file.write(self.start_time + '\n')
 
 async def is_recording(ctx):
-    return ctx.message.channel.id in session_dict
+    return ctx.channel.id in session_dict
 
 async def is_not_recording(ctx):
-    return not is_recording
+    return ctx.channel.id not in session_dict
 
 # START
 @bot.command()
 @commands.check(is_not_recording)
 async def start(ctx, *, recording_name):
-    channel_id = str(ctx.message.channel.id)
+    channel = ctx.channel
+    channel_id = str(channel.id)
     server_id = str(ctx.message.channel.guild.id)
     time = str(ctx.message.created_at)
 
-    session = Session(channel_id,arg,time,server_id)
+    session = Session(channel_id,recording_name,time,server_id)
     session_dict[channel_id] = session
 
-    await channel.send("This channel is now being recorded.")
+    await channel.send("`Recording started...`")
 
 #START ERROR
 @start.error
 async def start_error(ctx, error):
+    print(error)
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please provide a title")
-    if isinstance(error, commands.CheckFailure):
+        await ctx.send("Please provide a recording title: `r.start <title>`")
+    elif isinstance(error, commands.CheckFailure):
         await ctx.send("The channel is already recording")
+    else:
+        await ctx.send("The command ran into a problem")
+
 
 #STOP
 @bot.command()
 @commands.check(is_recording)
 async def stop(ctx):
-    channel_id = str(ctx.message.channel.id)
+    channel = ctx.channel
+    channel_id = str(channel.id)
 
     session = session_dict.get(channel_id)
     session.file.close()
@@ -75,6 +81,7 @@ async def stop(ctx):
 #STOP ERROR
 @stop.error
 async def stop_error(ctx, error):
+    print(error)
     if isinstance(error, commands.CheckFailure):
         await ctx.send("The channel is not recording")
 
@@ -82,7 +89,8 @@ async def stop_error(ctx, error):
 #LIST
 @bot.command()
 async def list(ctx):
-    server_id = str(ctx.message.channel.guild.id)
+    channel = ctx.channel
+    server_id = str(channel.guild.id)
 
     m = ""
     file_path = 'sessions/' + server_id
@@ -99,11 +107,12 @@ async def list(ctx):
 #LIST ERROR
 @list.error
 async def list_error(ctx, error):
+    print(error)
     await ctx.send("An error occured in this command.")
 
 #CHAPTER
 @bot.command()
-@commands.check(is_recording)
+@commands.check(is_not_recording)
 async def chapter(ctx, *, chapter_title):
     channel_id = str(ctx.message.channel.id)
 
@@ -112,8 +121,9 @@ async def chapter(ctx, *, chapter_title):
     session.file.write('\n\n=-=-=-=-= **' + chapter_title + '** =-=-=-=-=\n')
 
 #CHAPTER ERROR
-@start.error
+@chapter.error
 async def start_error(ctx, error):
+    print(error)
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Please provide a chapter title")
     if isinstance(error, commands.CheckFailure):
@@ -122,8 +132,10 @@ async def start_error(ctx, error):
 #IS RECORDING
 @bot.command()
 async def is_recording(ctx):
-    channel_id = str(ctx.message.channel.id)
-    is_recording = session_dict.has_key(channel_id)
+    channel = ctx.channel
+    channel_id = str(channel.id)
+
+    is_recording = channel_id in session_dict
 
     if(is_recording):
         await channel.send("This channel is recording")
@@ -133,14 +145,16 @@ async def is_recording(ctx):
 #RECORDING ERROR
 @is_recording.error
 async def is_recording_error(ctx, error):
+    print(error)
     await ctx.send("An error occured in this command.")
 
 #DOWNLOAD
 @bot.command()
 async def download(ctx, *, download_title):
-    server_id = str(ctx.message.channel.guild.id)
+    channel = ctx.channel
+    server_id = str(channel.guild.id)
 
-    file_path = 'sessions/' + server_id + '/' + arg + '.txt';
+    file_path = 'sessions/' + server_id + '/' + download_title + '.txt';
     if(os.path.exists(file_path)):
         await channel.send(file=discord.File(file_path))
     else:
@@ -149,14 +163,33 @@ async def download(ctx, *, download_title):
 #DOWNLOAD ERROR
 @download.error
 async def download_error(ctx, error):
+    print(error)
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("Please provide a recording to download")
+    else:
+        await ctx.send("An error has occured in that command")
 
-@client.event
+#DOWNLOAD_ALL
+@bot.command()
+async def download_all(ctx):
+    channel = ctx.channel
+    server_name = channel.guild.name
+    server_id = str(channel.guild.id)
+
+    path_to_dir = 'sessions/' + server_id
+    shutil.make_archive(server_name, 'zip', path_to_dir)
+
+    await ctx.send("Here")
+
+
+
+
+
+@bot.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    print('We have logged in as {0.user}'.format(bot))
 
-@client.event
+@bot.event
 async def on_message(message):
 
     author = message.author
@@ -167,7 +200,7 @@ async def on_message(message):
     time = str(message.created_at)
 
     #The bot should never respond to itself!
-    if message.author == client.user:
+    if message.author == bot.user:
         return
 
     #Ignore .messages and space messages
@@ -178,7 +211,7 @@ async def on_message(message):
     is_recording = channel_id in session_dict
 
     #Possibly log messages
-    if(is_recording):
+    if(is_recording and not message.content.startswith('r.')):
         session = session_dict.get(channel_id)
         session.file.write('**' + author.display_name + ":** " + content + '\n\n')
     else:
@@ -188,4 +221,4 @@ async def on_message(message):
 
 f = open("token.txt","r")
 token = f.read().strip()
-client.run(token)
+bot.run(token)
