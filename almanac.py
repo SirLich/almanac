@@ -10,6 +10,7 @@ import shutil
 
 session_dict = {}
 DEBUG_MODE = True
+TOKEN = "test_token.txt"
 bot = commands.Bot(command_prefix='r.')
 
 def debug(m):
@@ -222,6 +223,31 @@ async def delete_error(ctx, error):
 async def code(ctx):
     await ctx.channel.send("https://github.com/SirLich/almanac")
 
+def roll_result():
+    return random.randint(-1,1)
+
+def get_emoji(r):
+    if(r == -1):
+        return ':heavy_minus_sign:'
+    elif(r == 0):
+        return ':black_large_square:'
+    else:
+        return ':heavy_plus_sign:'
+
+#Roll!
+@bot.command(aliases=['roll'])
+async def draw(ctx, roll):
+    m = "**" + ctx.message.author.display_name + '**: '
+    print(roll)
+    r = int(roll)
+    total = 0
+    for i in range(r):
+        result = roll_result()
+        total += result
+        m += get_emoji(result) + " "
+
+    m += ':small_orange_diamond: Result: ' + str(total)
+    await ctx.channel.send(m)
 
 
 @bot.event
@@ -258,6 +284,6 @@ async def on_message(message):
 
 
 
-f = open("token.txt","r")
+f = open(TOKEN,"r")
 token = f.read().strip()
 bot.run(token)
